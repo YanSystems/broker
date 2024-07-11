@@ -12,8 +12,8 @@ func newReverseProxy(target string) *httputil.ReverseProxy {
 }
 
 var (
-	cmsProxy      = newReverseProxy("http://cms:8080")
-	compilerProxy = newReverseProxy("http://compiler:8080")
+	cmsProxy      = newReverseProxy("http://cms:8000")
+	compilerProxy = newReverseProxy("http://compiler:8000")
 )
 
 func handleRequests(w http.ResponseWriter, r *http.Request) {
