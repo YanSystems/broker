@@ -1,5 +1,7 @@
 # Broker
 
+![Tests](https://github.com/YanSystems/broker/actions/workflows/tests.yml/badge.svg) [![Go Report](https://goreportcard.com/badge/YanSystems/cms)](https://goreportcard.com/report/YanSystems/broker) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/YanSystems/broker/blob/main/LICENSE)
+
 This broker microservice is the singular API gateway for [@YanSystems](https://github.com/YanSystems). It proxies all requests from the client to the corresponding microservice.
 
 ## Running locally
