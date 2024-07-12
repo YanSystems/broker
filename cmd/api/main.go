@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
 )
+
+var apiToken = os.Getenv("API_TOKEN")
 
 const (
 	brokerURL   = "http://localhost:8080"
@@ -24,10 +27,14 @@ func main() {
 
 	r := gin.Default()
 
+	r.Use(authenticate())
 	r.Use(rateLimit())
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "Broker is running"})
+		c.JSON(http.StatusOK, gin.H{
+			"error":   false,
+			"message": "Broker is running",
+		})
 	})
 
 	r.Any("/compiler/*path", proxy1)
@@ -58,8 +65,41 @@ func createReverseProxy(targetURL string) func(*gin.Context) {
 	}
 }
 
+func authenticate() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error":   true,
+				"message": "Authorization header missing",
+			})
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error":   true,
+				"message": "Invalid Authorization header format",
+			})
+			return
+		}
+
+		receivedAPIToken := parts[1]
+		if receivedAPIToken != apiToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error":   true,
+				"message": "Unauthorized",
+			})
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func rateLimit() gin.HandlerFunc {
-	limiter := rate.NewLimiter(rate.Every(1*time.Minute/100), 100)
+	limiter := rate.NewLimiter(rate.Every(1*time.Minute/50), 50)
 
 	return func(c *gin.Context) {
 		if !limiter.Allow() {
